@@ -1,69 +1,105 @@
 # toggl-cron
 
-A Go tool that automatically creates Toggl time entries on a schedule.
+A CLI tool that automatically creates Toggl time entries on a cron schedule.
 
-## Setup
-
-1. Clone the repo
-2. Copy the example env file and fill in your values:
+## Install
 
 ```bash
-cp .env.example .env
+go install github.com/italiczx/toggl-cron@latest
 ```
 
-3. Add your `TOGGL_API_TOKEN` — find it at the bottom of your [Toggl profile page](https://track.toggl.com/profile).
-
-4. Add your `WORKSPACE_ID` — grab it from your workspace settings URL:
-   `https://track.toggl.com/{org_id}/workspaces/{workspace_id}/settings/activity`
-
-5. Install dependencies:
+Or clone and build locally:
 
 ```bash
-go mod tidy
+git clone https://github.com/italiczx/toggl-cron.git
+cd toggl-cron
+go build -o toggl-cron .
 ```
 
-## Finding your Project ID
+## Quick Start
 
-Before running the cron, you need your `PROJECT_ID`. List all projects in your workspace:
+### 1. Setup
+
+Run the interactive setup wizard. The only thing you need is your [Toggl API token](https://track.toggl.com/profile) (scroll to the bottom of the page).
 
 ```bash
-go run ./cmd/projects
+toggl-cron setup
 ```
 
-This prints a table of projects with their ID, name, and status. Copy the ID of the project you want and add it to your `.env` as `PROJECT_ID`.
+The wizard will:
 
-## Finding your Task ID
+- Authenticate with your API token
+- Auto-detect your workspace (or let you pick if you have multiple)
+- Let you select a project and task by name
+- Configure duration, billing, start hour, and cron schedule
+- Optionally add multiple schedules
+- Save everything to `~/.toggl-cron.yaml`
 
-Once `PROJECT_ID` is set in your `.env`, list the tasks for that project:
+### 2. Run
+
+Start the scheduler:
 
 ```bash
-go run ./cmd/tasks
+toggl-cron run
 ```
 
-This prints a table of tasks with their ID, name, and active status. Copy the ID of the task you want and add it to your `.env` as `TASK_ID`.
-
-## Configure your time entry
-
-Set the remaining values in your `.env`:
-
-| Variable      | Description                   | Default                     |
-| ------------- | ----------------------------- | --------------------------- |
-| `DESCRIPTION` | Title of the time entry       | `Auto-logged by toggl-cron` |
-| `DURATION`    | Duration in seconds           | `28800` (8 hours)           |
-| `BILLABLE`    | Whether the entry is billable | `false`                     |
-
-## Running the cron
-
-Once your `.env` is fully configured:
+Or fire all entries immediately (useful for testing):
 
 ```bash
-go run .
+toggl-cron run --once
 ```
 
-This starts a long-running process that creates a time entry every day at **5pm local time**. It will keep running until you stop it with `Ctrl+C`.
+### 3. Check status
 
-To run it in the background:
+View your current configuration:
 
 ```bash
-nohup go run . > toggl-cron.log 2>&1 &
+toggl-cron status
 ```
+
+## Commands
+
+| Command                 | Description                               |
+| ----------------------- | ----------------------------------------- |
+| `toggl-cron setup`      | Interactive setup wizard                  |
+| `toggl-cron run`        | Start the cron scheduler                  |
+| `toggl-cron run --once` | Create all entries immediately and exit   |
+| `toggl-cron status`     | Show current config and scheduled entries |
+
+## Config
+
+Configuration is stored in `~/.toggl-cron.yaml`. You can edit it directly if you prefer:
+
+```yaml
+api_token: "your_token_here"
+workspace_id: 12345
+workspace: "My Workspace"
+schedules:
+  - project: "Client A - Website"
+    project_id: 111
+    task: "Development"
+    task_id: 222
+    description: "Daily dev work"
+    duration: "8h"
+    billable: true
+    cron: "0 17 * * 1-5"
+    start_hour: 8
+
+  - project: "Internal - Admin"
+    project_id: 333
+    description: "Admin tasks"
+    duration: "1h"
+    billable: false
+    cron: "0 17 * * 1-5"
+    start_hour: 9
+```
+
+## Running as a Service
+
+To run in the background:
+
+```bash
+nohup toggl-cron run > toggl-cron.log 2>&1 &
+```
+
+Or create a systemd service, launchd plist, or use a process manager like `supervisord`.
