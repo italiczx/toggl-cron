@@ -149,7 +149,7 @@ func main() {
 	log.Printf("Scheduled to create a %ds entry for project %d daily at 17:00 local time", cfg.Duration, cfg.ProjectID)
 
 	c := cron.New()
-	c.AddFunc("0 17 * * *", func() {
+	c.AddFunc("0 17 * * 1-5", func() {
 		log.Println("Running scheduled time entry creation...")
 		createTimeEntry(cfg)
 	})
