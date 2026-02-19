@@ -102,4 +102,10 @@ To run in the background:
 nohup toggl-cron run > toggl-cron.log 2>&1 &
 ```
 
+To end the service:
+
+```bash
+pkill -f toggl-cron
+```
+
 Or create a systemd service, launchd plist, or use a process manager like `supervisord`.
